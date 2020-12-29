@@ -1,5 +1,3 @@
-
-
 // //
 // This STAN program defines a multivariate probit model
 

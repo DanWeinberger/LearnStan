@@ -74,7 +74,8 @@ pairs(fit2, pars = c("alpha", "beta1",  "lp__"))
 ```
 
 
-
+## Multivariate probit
+Simulate data with 3 fully-nested clinical outcomes, with varying VE against the 3
 
 https://mc-stan.org/docs/2_25/stan-users-guide/multivariate-outcomes.html
 ```{r}
