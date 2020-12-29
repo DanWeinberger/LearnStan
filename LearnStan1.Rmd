@@ -54,6 +54,8 @@ plot(la1$beta[,2], type='l') #trace plot
 ## Multivariate Poisson
 
 ```{r}
+set.seed(123)
+
 N2 <- 1000
 x1 <- rnorm(N2, 0, 1)
 x2 <- rnorm(N2, 0, 1)
@@ -66,9 +68,9 @@ Y2 <- rpois(N2, lambda2)
 
 ```{r}
 fit2 <- stan(file = './Models/multivariate_poisson.stan', data = dat2)
-print(fit1)
-plot(fit1)
-pairs(fit1, pars = c("alpha1", "beta1", "sigma1", "lp__"))
+print(fit2)
+plot(fit2)
+pairs(fit2, pars = c("alpha", "beta1",  "lp__"))
 ```
 
 
