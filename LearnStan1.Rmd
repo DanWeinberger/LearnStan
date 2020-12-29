@@ -1,0 +1,67 @@
+---
+title: "Learning STAN"
+author: "Dan Weinberger"
+date: "12/29/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+#install.packages("rstan", repos = "https://cloud.r-project.org/", dependencies = TRUE)
+#example(stan_model, package = "rstan", run.dontrun = TRUE) #test install
+
+
+library(rstan)
+options(mc.cores = parallel::detectCores())
+rstan_options(auto_write = TRUE)
+
+```
+
+```{r}
+dat1 <- list(y1 = y1, 
+                   x1=x1,
+                    N=1:length(y1))
+fit <- stan(file = 'schools.stan', data = schools_dat)
+
+```
+
+
+## Univariate regression
+
+### Simulate data
+```{r}
+  
+ N=1000
+ x1 <- rnorm(N,0, 1)
+ e1 <- rnorm(N,0, 0.25)
+ mu1 <- 3.5 + 2.5*x1 
+ y1 <- rnorm(N,mu1, 2)
+plot(x1, y1)
+
+ dat1 <- list('y1'=y1,'x1'=x1,'N'=length(y1)) #save data in a list
+
+```
+
+
+```{r}
+fit1 <- stan(file = './Models/simple_linear.stan', data = dat1)
+print(fit1)
+plot(fit1)
+pairs(fit1, pars = c("alpha1", "beta1", "sigma1", "lp__"))
+
+
+la1 <- extract(fit1, permuted = TRUE) # return a list of arrays 
+plot(la1$alpha1, type='l') #trace plot
+
+
+```
+
+
+
+
+
+https://mc-stan.org/docs/2_25/stan-users-guide/multivariate-outcomes.html
+```{r}
+
+```
+
