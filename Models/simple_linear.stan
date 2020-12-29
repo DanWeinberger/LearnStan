@@ -12,7 +12,8 @@
 // The input data is a vector 'y' of length 'N'.
 data {
   int<lower=0> N;
-  vector[N] x1;
+  int<lower=0> NCov;
+  matrix[N,NCov] X1Mat;
   vector[N] y1;
 }
 
@@ -20,7 +21,7 @@ data {
 // accepts two parameters 'mu' and 'sigma'.
 parameters {
   real alpha1;
-  real beta1;
+  vector[NCov] beta;       // coefficients for predictors
   real<lower=0> sigma1;
 }
 
@@ -28,5 +29,5 @@ parameters {
 // 'y' to be normally distributed with mean 'mu'
 // and standard deviation 'sigma'.
 model {
-  y1 ~ normal(alpha1 + beta1 * x1, sigma1);
+  y1 ~ normal(alpha1 + X1Mat * beta , sigma1);
 }

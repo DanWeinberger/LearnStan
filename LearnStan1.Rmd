@@ -17,28 +17,22 @@ rstan_options(auto_write = TRUE)
 
 ```
 
-```{r}
-dat1 <- list(y1 = y1, 
-                   x1=x1,
-                    N=1:length(y1))
-fit <- stan(file = 'schools.stan', data = schools_dat)
-
-```
-
-
 ## Univariate regression
 
 ### Simulate data
 ```{r}
-  
+set.seed(123)
+
  N=1000
  x1 <- rnorm(N,0, 1)
- e1 <- rnorm(N,0, 0.25)
- mu1 <- 3.5 + 2.5*x1 
+ x2 <- rnorm(N,0, 1)
+ X1Mat <- cbind(x1,x2)
+  e1 <- rnorm(N,0, 0.25)
+ mu1 <- 3.5 + 2.5*x1 +1*x2
  y1 <- rnorm(N,mu1, 2)
 plot(x1, y1)
 
- dat1 <- list('y1'=y1,'x1'=x1,'N'=length(y1)) #save data in a list
+ dat1 <- list('y1'=y1,'X1Mat'=X1Mat,'N'=length(y1),'NCov'=ncol(X1Mat)) #save data in a list
 
 ```
 
@@ -47,15 +41,35 @@ plot(x1, y1)
 fit1 <- stan(file = './Models/simple_linear.stan', data = dat1)
 print(fit1)
 plot(fit1)
-pairs(fit1, pars = c("alpha1", "beta1", "sigma1", "lp__"))
+pairs(fit1, pars = c("alpha1", "beta", "sigma1", "lp__"))
 
 
 la1 <- extract(fit1, permuted = TRUE) # return a list of arrays 
 plot(la1$alpha1, type='l') #trace plot
-
+plot(la1$beta[,1], type='l') #trace plot
+plot(la1$beta[,2], type='l') #trace plot
 
 ```
 
+## Multivariate Poisson
+
+```{r}
+N2 <- 1000
+x1 <- rnorm(N2, 0, 1)
+x2 <- rnorm(N2, 0, 1)
+XMat2 <- cbind(x1,x2)
+lambda2 <- exp( 2.5 + 1.5*x1 + 0.5*x2 )
+Y2 <- rpois(N2, lambda2)
+ dat2 <- list('Y2'=Y2,'x1'=x1,'x2'=x2,'N2'=length(Y2)) #save data in a list
+
+```
+
+```{r}
+fit2 <- stan(file = './Models/multivariate_poisson.stan', data = dat2)
+print(fit1)
+plot(fit1)
+pairs(fit1, pars = c("alpha1", "beta1", "sigma1", "lp__"))
+```
 
 
 
