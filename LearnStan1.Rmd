@@ -106,5 +106,20 @@ obs.IRR <- count.vax/count.controls
 obs.IRR
 
 
+all.Y <- rbind(Y1, Y2)
+vax.status <- c( rep(0, nrow(Y1)), rep(1, nrow(Y2)))
+intercept <- rep(0, nrow(all.Y))
+covars <- cbind(intercept, vax.status)
+
+dat3 <- list('y'=all.Y, 'D'=ncol(all.Y)  ,'N' =nrow(all.Y), 'K'=ncol(covars), 'x'=covars)
+
+```
+
+```{r}
+fit3 <- stan(file = './Models/multivariate_probit.stan', data = dat3)
+
+```
+```{r}
+print(fit3)
 ```
 
