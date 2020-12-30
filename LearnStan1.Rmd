@@ -82,23 +82,23 @@ https://mc-stan.org/docs/2_25/stan-users-guide/multivariate-outcomes.html
 set.seed(123)
 ##Simple generation of simulated data
 
-N1=1500
-N2=1500
+N1=1000
+N2=1000
 N.categories <- 3 #how many clinical categories
 
 IRR1 <- 0.7
 IRR2 <- 0.5
-IRR3 <- 0.3
+IRR3 <- 0.1
 
 Y1 <- matrix(NA, nrow=N1, ncol=N.categories)
 Y1[,1] <- rbinom(N1, size=1, prob= 0.1 )
 Y1[,2] <- rbinom(N1, size=1, prob= 0.8*Y1[,1] ) #80% of Y1 is also Y2
-Y1[,3] <- rbinom(N1, size=1, prob= 0.5*Y1[,2] ) #80% of Y2 is also Y3
+Y1[,3] <- rbinom(N1, size=1, prob= 0.5*Y1[,2] ) #50% of Y2 is also Y3
 
 Y2 <- matrix(NA, nrow=N2, ncol=N.categories)
 Y2[,1] <- rbinom(N2, size=1, prob= 0.1*IRR1 )
-Y2[,2] <- rbinom(N2, size=1, prob= 0.9*Y2[,1]*IRR2 ) #90% of Y1 is also Y2
-Y2[,3] <- rbinom(N2, size=1, prob= 0.8*Y2[,2]*IRR3 ) #80% of Y2 is also Y3
+Y2[,2] <- rbinom(N2, size=1, prob= 0.8*Y2[,1]*(IRR2/IRR1) ) #80% of Y1 is also Y2
+Y2[,3] <- rbinom(N2, size=1, prob= 0.5*Y2[,2]*(IRR3/(IRR1*IRR2) )) #50% of Y2 is also Y3
 
 #frequency of each category
 count.controls <- apply(Y1,2,sum)
@@ -117,10 +117,26 @@ dat3 <- list('y'=all.Y, 'D'=ncol(all.Y)  ,'N' =nrow(all.Y), 'K'=ncol(covars), 'x
 ```
 
 ```{r}
-fit3 <- stan(file = './Models/multivariate_probit.stan', data = dat3)
+fit3 <- stan(file = './Models/multivariate_probit_alt.stan', data = dat3)
 
 ```
 ```{r}
 print(fit3)
+
+```
+
+
+```{r}
+la3 <- extract(fit3, permuted = TRUE) # return a list of arrays 
+plot(la3$beta[,1,2], type='l') #trace plot
+plot(la3$beta[,2,2], type='l') #trace plot
+plot(la3$beta[,3,2], type='l') #trace plot
+
+
+p.vax.grp1 <- pnorm(la3$beta[,1,1] + la3$beta[,1,2])
+p.unvax.grp1 <- pnorm(la3$beta[,1,1])
+
+
+
 ```
 
