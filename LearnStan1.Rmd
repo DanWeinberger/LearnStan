@@ -139,8 +139,11 @@ plot(la3$beta[,3,2], type='l') #trace plot
 p.vax.grp1 <- pnorm(la3$beta[,1,1] + la3$beta[,1,2])
 p.unvax.grp1 <- pnorm(la3$beta[,1,1])
 
-p.vax.grp2 <- pnorm(scale(la3$beta[,2,1] + la3$beta[,2,2]))
-p.unvax.grp2 <- pnorm(scale(la3$beta[,2,1]))
+p.vax.grp2 <- pnorm(la3$beta[,2,1] + la3$beta[,2,2])
+p.unvax.grp2 <- pnorm(la3$beta[,2,1])
+
+p.vax.grp3 <- pnorm(la3$beta[,3,1] + la3$beta[,3,2])
+p.unvax.grp3 <- pnorm(la3$beta[,3,1])
 
 irr.grp1 <- p.vax.grp1/p.unvax.grp1
 irr.grp1.q <- quantile(irr.grp1, probs=c(0.025,0.5,0.975))
@@ -148,8 +151,11 @@ irr.grp1.q <- quantile(irr.grp1, probs=c(0.025,0.5,0.975))
 irr.grp2 <- p.vax.grp2/p.unvax.grp2
 irr.grp2.q <- quantile(irr.grp2, probs=c(0.025,0.5,0.975))
 
+irr.grp3 <- p.vax.grp3/p.unvax.grp3
+irr.grp3.q <- quantile(irr.grp3, probs=c(0.025,0.5,0.975))
 
-ar3 <- extract(fit3, permuted = F) # return a list of arrays 
-betas <- ar3[,,grep('beta', dimnames(ar3)[[3]])]
+irr.grp1.q
+irr.grp2.q
+irr.grp3.q
 ```
 
