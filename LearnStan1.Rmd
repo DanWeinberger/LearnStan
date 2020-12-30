@@ -117,7 +117,7 @@ dat3 <- list('y'=all.Y, 'D'=ncol(all.Y)  ,'N' =nrow(all.Y), 'K'=ncol(covars), 'x
 ```
 
 ```{r}
-fit3 <- stan(file = './Models/multivariate_probit_alt.stan', data = dat3)
+fit3 <- stan(file = './Models/multivariate_probit.stan', data = dat3)
 
 ```
 ```{r}
