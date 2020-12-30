@@ -82,8 +82,8 @@ https://mc-stan.org/docs/2_25/stan-users-guide/multivariate-outcomes.html
 set.seed(123)
 ##Simple generation of simulated data
 
-N1=1000
-N2=1000
+N1=500
+N2=500
 N.categories <- 3 #how many clinical categories
 
 IRR1 <- 0.7
@@ -104,12 +104,12 @@ Y2[,3] <- rbinom(N2, size=1, prob= 0.5*Y2[,2]*(IRR3/(IRR1*IRR2) )) #50% of Y2 is
 count.controls <- apply(Y1,2,sum)
 count.vax <- apply(Y2,2,sum)
 obs.IRR <- count.vax/count.controls
-obs.IRR
+obs.IRR #Empirical IRRs
 
 
 all.Y <- rbind(Y1, Y2)
 vax.status <- c( rep(0, nrow(Y1)), rep(1, nrow(Y2)))
-intercept <- rep(0, nrow(all.Y))
+intercept <- rep(1, nrow(all.Y))
 covars <- cbind(intercept, vax.status)
 
 dat3 <- list('y'=all.Y, 'D'=ncol(all.Y)  ,'N' =nrow(all.Y), 'K'=ncol(covars), 'x'=covars)
@@ -117,9 +117,12 @@ dat3 <- list('y'=all.Y, 'D'=ncol(all.Y)  ,'N' =nrow(all.Y), 'K'=ncol(covars), 'x
 ```
 
 ```{r}
-fit3 <- stan(file = './Models/multivariate_probit.stan', data = dat3)
+#fit3 <- stan(file = './Models/multivariate_probit.stan', data = dat3)
+#saveRDS(fit3,'./Results/fit3.rds')
+fit3 <- readRDS('./Results/fit3.rds')
 
 ```
+
 ```{r}
 print(fit3)
 
@@ -136,7 +139,17 @@ plot(la3$beta[,3,2], type='l') #trace plot
 p.vax.grp1 <- pnorm(la3$beta[,1,1] + la3$beta[,1,2])
 p.unvax.grp1 <- pnorm(la3$beta[,1,1])
 
+p.vax.grp2 <- pnorm(scale(la3$beta[,2,1] + la3$beta[,2,2]))
+p.unvax.grp2 <- pnorm(scale(la3$beta[,2,1]))
+
+irr.grp1 <- p.vax.grp1/p.unvax.grp1
+irr.grp1.q <- quantile(irr.grp1, probs=c(0.025,0.5,0.975))
+
+irr.grp2 <- p.vax.grp2/p.unvax.grp2
+irr.grp2.q <- quantile(irr.grp2, probs=c(0.025,0.5,0.975))
 
 
+ar3 <- extract(fit3, permuted = F) # return a list of arrays 
+betas <- ar3[,,grep('beta', dimnames(ar3)[[3]])]
 ```
 
