@@ -1,0 +1,161 @@
+---
+title: "Learning STAN"
+author: "Dan Weinberger"
+date: "12/29/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+#install.packages("rstan", repos = "https://cloud.r-project.org/", dependencies = TRUE)
+#example(stan_model, package = "rstan", run.dontrun = TRUE) #test install
+
+
+library(rstan)
+options(mc.cores = parallel::detectCores())
+rstan_options(auto_write = TRUE)
+
+```
+
+## Univariate regression
+
+### Simulate data
+```{r}
+set.seed(123)
+
+ N=1000
+ x1 <- rnorm(N,0, 1)
+ x2 <- rnorm(N,0, 1)
+ X1Mat <- cbind(x1,x2)
+  e1 <- rnorm(N,0, 0.25)
+ mu1 <- 3.5 + 2.5*x1 +1*x2
+ y1 <- rnorm(N,mu1, 2)
+plot(x1, y1)
+
+ dat1 <- list('y1'=y1,'X1Mat'=X1Mat,'N'=length(y1),'NCov'=ncol(X1Mat)) #save data in a list
+
+```
+
+
+```{r}
+fit1 <- stan(file = './Models/simple_linear.stan', data = dat1)
+print(fit1)
+plot(fit1)
+pairs(fit1, pars = c("alpha1", "beta", "sigma1", "lp__"))
+
+
+la1 <- extract(fit1, permuted = TRUE) # return a list of arrays 
+plot(la1$alpha1, type='l') #trace plot
+plot(la1$beta[,1], type='l') #trace plot
+plot(la1$beta[,2], type='l') #trace plot
+
+```
+
+## Multivariate Poisson
+
+```{r}
+set.seed(123)
+
+N2 <- 1000
+x1 <- rnorm(N2, 0, 1)
+x2 <- rnorm(N2, 0, 1)
+XMat2 <- cbind(x1,x2)
+lambda2 <- exp( 2.5 + 1.5*x1 + 0.5*x2 )
+Y2 <- rpois(N2, lambda2)
+ dat2 <- list('Y2'=Y2,'x1'=x1,'x2'=x2,'N2'=length(Y2)) #save data in a list
+
+```
+
+```{r}
+fit2 <- stan(file = './Models/multivariate_poisson.stan', data = dat2)
+print(fit2)
+plot(fit2)
+pairs(fit2, pars = c("alpha", "beta1",  "lp__"))
+```
+
+
+## Multivariate probit
+Simulate data with 3 fully-nested clinical outcomes, with varying VE against the 3
+
+https://mc-stan.org/docs/2_25/stan-users-guide/multivariate-outcomes.html
+```{r}
+set.seed(123)
+##Simple generation of simulated data
+
+N1=500
+N2=500
+N.categories <- 3 #how many clinical categories
+
+IRR1 <- 0.7
+IRR2 <- 0.5
+IRR3 <- 0.1
+
+Y1 <- matrix(NA, nrow=N1, ncol=N.categories)
+Y1[,1] <- rbinom(N1, size=1, prob= 0.1 )
+Y1[,2] <- rbinom(N1, size=1, prob= 0.8*Y1[,1] ) #80% of Y1 is also Y2
+Y1[,3] <- rbinom(N1, size=1, prob= 0.5*Y1[,2] ) #50% of Y2 is also Y3
+
+Y2 <- matrix(NA, nrow=N2, ncol=N.categories)
+Y2[,1] <- rbinom(N2, size=1, prob= 0.1*IRR1 )
+Y2[,2] <- rbinom(N2, size=1, prob= 0.8*Y2[,1]*(IRR2/IRR1) ) #80% of Y1 is also Y2
+Y2[,3] <- rbinom(N2, size=1, prob= 0.5*Y2[,2]*(IRR3/(IRR1*IRR2) )) #50% of Y2 is also Y3
+
+#frequency of each category
+count.controls <- apply(Y1,2,sum)
+count.vax <- apply(Y2,2,sum)
+obs.IRR <- count.vax/count.controls
+obs.IRR #Empirical IRRs
+
+
+all.Y <- rbind(Y1, Y2)
+vax.status <- c( rep(0, nrow(Y1)), rep(1, nrow(Y2)))
+intercept <- rep(1, nrow(all.Y))
+covars <- cbind(intercept, vax.status)
+
+dat3 <- list('y'=all.Y, 'D'=ncol(all.Y)  ,'N' =nrow(all.Y), 'K'=ncol(covars), 'x'=covars)
+
+```
+
+```{r}
+fit3 <- stan(file = './Models/multivariate_probit_alt.stan', data = dat3)
+saveRDS(fit3,'./Results/fit3_alt.rds')
+fit3 <- readRDS('./Results/fit3_alt.rds')
+
+```
+
+```{r}
+print(fit3)
+
+```
+
+
+```{r}
+la3 <- extract(fit3, permuted = TRUE) # return a list of arrays 
+plot(la3$beta[,1,2], type='l') #trace plot
+plot(la3$beta[,2,2], type='l') #trace plot
+plot(la3$beta[,3,2], type='l') #trace plot
+
+
+p.vax.grp1 <- pnorm(la3$beta[,1,1] + la3$beta[,1,2])
+p.unvax.grp1 <- pnorm(la3$beta[,1,1])
+
+p.vax.grp2 <- pnorm(la3$beta[,2,1] + la3$beta[,2,2])
+p.unvax.grp2 <- pnorm(la3$beta[,2,1])
+
+p.vax.grp3 <- pnorm(la3$beta[,3,1] + la3$beta[,3,2])
+p.unvax.grp3 <- pnorm(la3$beta[,3,1])
+
+irr.grp1 <- p.vax.grp1/p.unvax.grp1
+irr.grp1.q <- quantile(irr.grp1, probs=c(0.025,0.5,0.975))
+
+irr.grp2 <- p.vax.grp2/p.unvax.grp2
+irr.grp2.q <- quantile(irr.grp2, probs=c(0.025,0.5,0.975))
+
+irr.grp3 <- p.vax.grp3/p.unvax.grp3
+irr.grp3.q <- quantile(irr.grp3, probs=c(0.025,0.5,0.975))
+
+irr.grp1.q
+irr.grp2.q
+irr.grp3.q
+```
+
