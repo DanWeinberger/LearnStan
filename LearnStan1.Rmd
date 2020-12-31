@@ -117,7 +117,10 @@ dat3 <- list('y'=all.Y, 'D'=ncol(all.Y)  ,'N' =nrow(all.Y), 'K'=ncol(covars), 'x
 ```
 
 ```{r}
-#fit3 <- stan(file = './Models/multivariate_probit.stan', data = dat3)
+#ptm <- proc.time()
+#fit3 <- stan(file = './Models/multivariate_probit_alt.stan', data = dat3)
+#proc.time() - ptm
+
 #saveRDS(fit3,'./Results/fit3.rds')
 fit3 <- readRDS('./Results/fit3.rds')
 
@@ -128,13 +131,18 @@ print(fit3)
 
 ```
 
-
 ```{r}
 la3 <- extract(fit3, permuted = TRUE) # return a list of arrays 
+
+```
+
+```{r}
 plot(la3$beta[,1,2], type='l') #trace plot
 plot(la3$beta[,2,2], type='l') #trace plot
 plot(la3$beta[,3,2], type='l') #trace plot
+```
 
+```{r}
 
 p.vax.grp1 <- pnorm(la3$beta[,1,1] + la3$beta[,1,2])
 p.unvax.grp1 <- pnorm(la3$beta[,1,1])
