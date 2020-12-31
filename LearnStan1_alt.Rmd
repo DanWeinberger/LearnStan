@@ -160,11 +160,13 @@ irr.grp3.q
 ```
 
 ```{r}
-L_omega <- la3$L_Omega
-L_omega_med <- apply(L_omega,c(2,3), median)
+L_omega <- la3$L_Omega #Cholesky decomposition
 
-L_omega_q <- apply(L_omega,c(2,3), quantile, probs=c(0.025, 0.5, 0.975))
-L_omega_q <-  aperm(L_omega_q, c(2,3,1))
+
+corr_omega <- apply(la3$L_Omega,c(1), function(x) tcrossprod(x) ) #converts cholesky decomposition back to correlation matrix
+corr_omega <- array(corr_omega, dim=c(3,3,dim(L_omega)[1]))
+corr_omega_q <- apply(corr_omega,c(1,2), quantile, probs=c(0.025, 0.5, 0.975))
+corr_omega_q <-  aperm(corr_omega_q, c(2,3,1))
 
 ```
 
