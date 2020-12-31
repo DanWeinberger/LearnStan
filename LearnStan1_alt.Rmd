@@ -159,3 +159,13 @@ irr.grp2.q
 irr.grp3.q
 ```
 
+```{r}
+L_omega <- la3$L_Omega
+L_omega_med <- apply(L_omega,c(2,3), median)
+
+L_omega_q <- apply(L_omega,c(2,3), quantile, probs=c(0.025, 0.5, 0.975))
+L_omega_q <-  aperm(L_omega_q, c(2,3,1))
+
+```
+
+
